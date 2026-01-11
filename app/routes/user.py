@@ -1,22 +1,59 @@
-from fastapi import APIRouter, HTTPException
-
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
+from typing import Any, Annotated
 from app.routes.deps import SessionDeps
-from app.schemas import UserCreate
-from app.crud import get_user_from_email, create_user
-from app.utils import generate_new_account_email
+from app.schemas import UserCreate, UserRegister, UserPublic
+
+from app.utils import generate_new_account_email, send_email
+from app import crud
 
 router = APIRouter(prefix="/user", tags=["user"])
 
 
 @router.post("/")
 def create_user(session: SessionDeps, user_in: UserCreate):
-    user = get_user_from_email(session, email=user_in.email)
+    user = crud.get_user_from_email(session, email=user_in.email)
     if user:
         raise HTTPException(
             status_code=400,
             detail="The user with this email already exists in the system.",
         )
-    user = create_user(session, user=user_in)
+    user = crud.create_user(session, user=user_in)
     email_data = generate_new_account_email(
-        email_to=user.email, password=user_in.password
+        email_to=user.email, username=user.email, password=user_in.password
     )
+
+    send_email(
+        email_to=user_in.email,
+        subject=email_data.subject,
+        html_content=email_data.html_content,
+    )
+    return user
+
+
+@router.post("/signup", response_model=UserPublic)
+def register_user(session: SessionDeps, user_in: UserRegister) -> Any:
+    """
+    Create new user without the need to be logged in.
+    """
+    user = crud.get_user_from_email(session=session, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system",
+        )
+    user_create = UserCreate.model_validate(user_in)
+    user = create_user(session=session, user_create=user_create)
+    return user
+
+
+@router.post("/login")
+def login_user(
+    session: SessionDeps, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+):
+    user = crud.authenticate(
+        session=session, email=form_data.username, password=form_data.password
+    )
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    return user

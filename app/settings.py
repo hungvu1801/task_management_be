@@ -10,14 +10,6 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def parse_cors(v: Any) -> list[str] | str:
-    if isinstance(v, str) and not v.startswith("["):
-        return [i.strip() for i in v.split(",") if i.strip()]
-    elif isinstance(v, list | str):
-        return v
-    raise ValueError(v)
-
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
@@ -39,8 +31,14 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = ""
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
-    EMAILS_FROM_NAME: str = "Task Management"
+    EMAILS_FROM_NAME: str = "noreply@taskmanagement.com"
     EMAILS_FROM_EMAIL: str = ""
+    SMTP_HOST: str = ""
+    SMTP_USER: str = "vumichael0811@gmail.com"
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool
+    SMTP_SSL: bool
+    SMTP_PORT: int = 587
 
     @computed_field  # type: ignore[prop-decorator]
     @property

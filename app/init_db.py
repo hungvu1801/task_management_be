@@ -10,7 +10,7 @@ def init_db(session: Session) -> None:
     from sqlmodel import SQLModel
 
     # This works because the models are already imported and registered from app.models
-    print(SQLModel.metadata.tables.keys())
+
     SQLModel.metadata.create_all(engine)
 
 

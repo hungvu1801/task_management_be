@@ -1,8 +1,8 @@
 from sqlmodel import Session
 from app.db import engine
 from collections.abc import Generator
-from typing import Annotated
 from fastapi import Depends
+from typing import Annotated
 
 
 def get_db() -> Generator[Session, None, None]:
