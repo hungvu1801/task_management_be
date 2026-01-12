@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Any, Annotated
+import uuid
 from app.routes.deps import SessionDeps
-from app.schemas import UserCreate, UserRegister, UserPublic
-
+from app.schemas import UserCreate, UserRegister, UserPublic, Project, Task
 from app.utils import generate_new_account_email, send_email
 from app import crud
 
@@ -57,3 +57,19 @@ def login_user(
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     return user
+
+
+@router.get("/{user_id}/projects", response_model=list[Project])
+def get_user_projects(session: SessionDeps, user_id: uuid.UUID):
+    user = crud.get_user_from_id(session, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user.projects
+
+
+@router.get("/{user_id}/tasks", response_model=list[Task])
+def get_user_tasks(session: SessionDeps, user_id: uuid.UUID):
+    user = crud.get_user_from_id(session, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user.tasks

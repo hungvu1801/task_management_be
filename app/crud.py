@@ -1,4 +1,5 @@
 from sqlmodel import select
+import uuid
 
 from app.routes.deps import SessionDeps
 from app.schemas import User, UserCreate
@@ -7,6 +8,11 @@ from app.security import get_password_hash, verify_password
 
 def get_user_from_email(session: SessionDeps, email: str):
     user = session.exec(select(User).where(User.email == email)).first()
+    return user
+
+
+def get_user_from_id(session: SessionDeps, user_id: uuid.UUID):
+    user = session.exec(select(User).where(User.id == user_id)).first()
     return user
 
 
